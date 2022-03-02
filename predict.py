@@ -11,14 +11,14 @@ from keras.optimizers import Adadelta
 from sklearn import metrics
 import h5py
 
-INPUT_LENGTH = 1000
+INPUT_LENGTH = 200
 EPOCH = 200
 BATCH_SIZE = 200
 WORK_DIR = "./"
 
 def model_predict(data_file, weights_file, result_file):
 
-        model_file = WORK_DIR + "/src/model.hdf5"
+        model_file = WORK_DIR + "/examples/model.hdf5"
         model = load_model(model_file)
         model.load_weights(weights_file)
         
