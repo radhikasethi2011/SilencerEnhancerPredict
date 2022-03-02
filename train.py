@@ -11,7 +11,7 @@ from tensorflow.keras.optimizers import Adadelta
 from sklearn import metrics
 import h5py
 
-INPUT_LENGTH = 1000
+INPUT_LENGTH = 200
 EPOCH = 200
 BATCH_SIZE = 64
 WORK_DIR = "./"
@@ -49,7 +49,7 @@ def run_model(data, model, save_dir):
 
     parallel_model.fit(X_train,
                        Y_train,
-                       batch_size=BATCH_SIZE * GPUS,
+                       batch_size=BATCH_SIZE * 1,
                        epochs=EPOCH,
                        validation_data=(X_validation, Y_validation),
                        shuffle=True,
@@ -105,7 +105,7 @@ def load_dataset(Dfile):
 
 def train_model(Dfile,results_dir):
 
-    model_file = WORK_DIR + "/src/model.hdf5"
+    model_file = WORK_DIR + "/examples/model.hdf5"
     model = load_model(model_file)
    
     if not os.path.exists(Dfile):
