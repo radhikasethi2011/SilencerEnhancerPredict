@@ -7,7 +7,7 @@ from Bio import SeqIO
 from pybedtools import BedTool
 from keras.models import load_model
 from keras.callbacks import ModelCheckpoint, EarlyStopping
-from keras.optimizers import Adadelta
+from tensorflow.keras.optimizers import Adadelta
 from sklearn import metrics
 import h5py
 
@@ -105,7 +105,7 @@ def load_dataset(Dfile):
 
 def train_model(Dfile,results_dir):
 
-    model_file = WORK_DIR + "/source_files/model.hdf5"
+    model_file = WORK_DIR + "/src/model.hdf5"
     model = load_model(model_file)
    
     if not os.path.exists(Dfile):
