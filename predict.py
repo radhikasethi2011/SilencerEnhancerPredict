@@ -14,7 +14,7 @@ import h5py
 INPUT_LENGTH = 200
 EPOCH = 200
 BATCH_SIZE = 200
-WORK_DIR = "./"
+WORK_DIR = "/content/SilencerEnhancerPredict"
 
 def model_predict(data_file, weights_file, result_file):
 
@@ -26,7 +26,7 @@ def model_predict(data_file, weights_file, result_file):
         x = data["x"]
 
         print("prediction on test samples ...")
-	ypred = model.predict(x, batch_size=1000, verbose=1)
+	ypred = model.predict(x, batch_size=200, verbose=1)
 	
         with h5py.File(result_file, "w") as of:
        	     of.create_dataset(name="ypred", data=ypred, compression="gzip")
