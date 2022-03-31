@@ -14,7 +14,7 @@ import h5py
 INPUT_LENGTH = 200
 EPOCH = 200
 BATCH_SIZE = 64
-WORK_DIR = "./"
+WORK_DIR = "/content/SilencerEnhancerPredict"
 
 def run_model(data, model, save_dir):
 
@@ -37,9 +37,11 @@ def run_model(data, model, save_dir):
     Y_test = data["test_labels"]
 
     from keras.utils.np_utils import to_categorical
+    '''
     Y_train = to_categorical(Y_train, num_classes=None)
     Y_test = to_categorical(Y_test, num_classes=None)
     Y_validation = to_categorical(Y_validation, num_classes=None)
+    '''
 
     _callbacks = []
     checkpointer = ModelCheckpoint(filepath=weights_file, verbose=1, save_best_only=True)
@@ -57,14 +59,14 @@ def run_model(data, model, save_dir):
 
     Y_pred = parallel_model.predict(X_test)
 
-    auc1 = metrics.roc_auc_score(Y_test[:,1], Y_pred[:,1])
-    auc2 = metrics.roc_auc_score(Y_test[:,2], Y_pred[:,2])
+    auc1 = metrics.roc_auc_score(Y_test[:,0], Y_pred[:,0])
+    auc2 = metrics.roc_auc_score(Y_test[:,1], Y_pred[:,1])
 
     with open(os.path.join(save_dir, "auc.txt"), "w") as of:
         of.write("enhancer AUC: %f\n" % auc2)
         of.write("silencer AUC: %f\n" % auc1)
 
-    [fprs, tprs, thrs] = metrics.roc_curve(Y_test[:,1], Y_pred[:, 1])
+    [fprs, tprs, thrs] = metrics.roc_curve(Y_test[:,0], Y_pred[:, 0])
     sort_ix = np.argsort(np.abs(fprs - 0.1))
     fpr10_thr = thrs[sort_ix[0]]
     sort_ix = np.argsort(np.abs(fprs - 0.05))
@@ -74,7 +76,7 @@ def run_model(data, model, save_dir):
     sort_ix = np.argsort(np.abs(fprs - 0.01))
     fpr1_thr = thrs[sort_ix[0]]
 
-    [fprs, tprs, thrs] = metrics.roc_curve(Y_test[:,2], Y_pred[:, 2])
+    [fprs, tprs, thrs] = metrics.roc_curve(Y_test[:,1], Y_pred[:, 1])
     sort_ix = np.argsort(np.abs(fprs - 0.1))
     fpr10_thre = thrs[sort_ix[0]]
     sort_ix = np.argsort(np.abs(fprs - 0.05))
