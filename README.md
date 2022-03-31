@@ -30,6 +30,9 @@ output: ./examples/data_prediction.hdf5.predict.data
 
 ## Featuring
 %pip install Bio
+
 %pip install pybedtools
+
 !python /content/SilencerEnhancerPredict/train.py /content/SilencerEnhancerPredict/examples/training_200seq_2class.hdf5 /content/SilencerEnhancerPredict/examples/
+
 !python /content/SilencerEnhancerPredict/train.py /content/SilencerEnhancerPredict/examples/training_200seq_2class.hdf5 /content/SilencerEnhancerPredict/examples/
