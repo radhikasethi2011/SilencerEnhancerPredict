@@ -23,7 +23,7 @@ def model_predict(data_file, weights_file, result_file):
   model = load_model(model_file)
   model.load_weights(weights_file)
   data = load_dataset(data_file)
-  x = data["x"]
+  x = data["test_data"]
 
   print("prediction on test samples ...")
   ypred = model.predict(x, batch_size=200, verbose=1)
@@ -50,4 +50,3 @@ if __name__ == "__main__":
   result_file = data_file+".pred.data"
   
   model_predict(data_file, model_file, result_file)
-
