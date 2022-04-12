@@ -35,4 +35,4 @@ output: ./examples/data_prediction.hdf5.predict.data
 
 !python /content/SilencerEnhancerPredict/train.py /content/SilencerEnhancerPredict/examples/training_200seq_2class.hdf5 /content/SilencerEnhancerPredict/examples/
 
-!python /content/SilencerEnhancerPredict/train.py /content/SilencerEnhancerPredict/examples/training_200seq_2class.hdf5 /content/SilencerEnhancerPredict/examples/
+!python /content/SilencerEnhancerPredict/train.py /content/SilencerEnhancerPredict/examples/training_200seq_2class.hdf5 /content/SilencerEnhancerPredict/examples/model_weights.hdf5
