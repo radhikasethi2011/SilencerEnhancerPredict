@@ -10,11 +10,60 @@ from keras.callbacks import ModelCheckpoint, EarlyStopping
 from tensorflow.keras.optimizers import Adadelta
 from sklearn import metrics
 import h5py
+from sklearn.model_selection import KFold
+from predict import model_predict, load_dataset
+from sklearn.metrics import roc_curve,roc_auc_score
+import matplotlib.pyplot as plt
+
 
 INPUT_LENGTH = 200
 EPOCH = 200
 BATCH_SIZE = 64
 WORK_DIR = "/content/SilencerEnhancerPredict"
+
+def plot_roc_curve(fpr,tpr): 
+  plt.plot(fpr,tpr) 
+  plt.axis([0,1,0,1]) 
+  plt.xlabel('False Positive Rate') 
+  plt.ylabel('True Positive Rate') 
+  plt.show()   
+
+def test_auc_acc(test_acc_per_fold,test_auc_per_fold,y_test_kf):
+  f= '/content/SilencerEnhancerPredict/examples/training_200seq_2class.hdf5.pred.data'
+  with h5py.File(f, "r") as f:
+      # List all groups
+      print("Keys: %s" % f.keys())
+      a_group_key = list(f.keys())[0]
+
+      # Get the data
+      data_pred = list(f[a_group_key])
+
+  data_pred_class = []
+  for i in range(len(data_pred)):
+    if data_pred[i][0] > data_pred[i][1]:
+      data_pred_class.append(0) #left
+    else: 
+      data_pred_class.append(1) #right
+  
+  d2 = y_test_kf[:].tolist()
+  data_orig_class = []
+  for i in range(len(d2)):
+    if(d2[i] == [1.0, 0.0]):
+      data_orig_class.append(0)
+    else:
+      data_orig_class.append(1)
+  acc= metrics.accuracy_score(data_orig_class, data_pred_class, normalize=True, sample_weight=None)
+  test_acc_per_fold.append(acc)
+  fpr , tpr , thresholds = roc_curve (data_orig_class, data_pred_class)
+  auc= metrics.auc(fpr, tpr)
+  test_auc_per_fold.append(auc)
+  plot_roc_curve (fpr,tpr) 
+
+
+def train_val_divide(mat):
+  mat_train=mat[:6597]
+  mat_val=mat[6597:]
+  return mat_train,mat_val
 
 def run_model(data, model, save_dir):
 
@@ -49,20 +98,72 @@ def run_model(data, model, save_dir):
     earlystopper = EarlyStopping(monitor="val_loss", patience=10, verbose=1)
     _callbacks.append(earlystopper)
 
-    parallel_model.fit(X_train,
-                       Y_train,
-                       batch_size=BATCH_SIZE * 1,
-                       epochs=EPOCH,
-                       validation_data=(X_validation, Y_validation),
-                       shuffle=True,
-                       callbacks=_callbacks, verbose=1)
+    kfold = KFold(n_splits=2, shuffle=True)
 
-    Y_pred = parallel_model.predict(X_test)
+    inputs = np.concatenate((data["train_data"], data["val_data"]), axis=0)
+    inputs = np.concatenate((inputs, data["test_data"]), axis=0)
+    targets = np.concatenate((data["train_labels"], data["val_labels"]), axis=0)
+    targets = np.concatenate((targets, data["test_labels"]), axis=0)
 
-    auc1 = metrics.roc_auc_score(Y_test[:,0], Y_pred[:,0])
-    auc2 = metrics.roc_auc_score(Y_test[:,1], Y_pred[:,1])
 
-    with open(os.path.join(save_dir, "auc.txt"), "w") as of:
+    fold_no = 1
+    train_acc_per_fold=[]
+    train_loss_per_fold=[]
+    test_acc_per_fold=[]
+    test_auc_per_fold=[]
+
+    for train_index, test_index in kfold.split(inputs):
+      #print("TRAIN:", train_index, "TEST:", test_index)
+      print(fold_no)
+      print(" ")
+
+      X_train_kf, X_test_kf = inputs[train_index], inputs[test_index]
+      y_train_kf, y_test_kf = targets[train_index], targets[test_index]
+      X_train_kf_1, X_val_kf = train_val_divide(X_train_kf)
+      y_train_kf_1, y_val_kf = train_val_divide(y_train_kf)
+
+      history = parallel_model.fit(X_train_kf_1,
+                          y_train_kf_1,
+                          batch_size=BATCH_SIZE * 1,
+                          epochs=25,
+                          validation_data=(X_val_kf, y_val_kf),
+                          shuffle=True,
+                          callbacks=_callbacks, verbose=1)
+
+      Y_pred = parallel_model.predict(X_test_kf)
+
+      auc1 = metrics.roc_auc_score(y_test_kf[:,0], Y_pred[:,0])
+      auc2 = metrics.roc_auc_score(y_test_kf[:,1], Y_pred[:,1])
+
+      scores = parallel_model.evaluate(X_test_kf,y_test_kf, verbose=0)
+      print(" ")
+      print(f'Score for fold {fold_no}: {parallel_model.metrics_names[0]} of {scores[0]}; {parallel_model.metrics_names[1]} of {scores[1]*100}%')
+      train_acc_per_fold.append(scores[1] * 100)
+      train_loss_per_fold.append(scores[0])
+
+      # Increase fold number
+      fold_no = fold_no + 1
+      model_predict('/content/SilencerEnhancerPredict/examples/training_200seq_2class.hdf5', '/content/SilencerEnhancerPredict/examples/model_weights.hdf5', '/content/SilencerEnhancerPredict/examples/training_200seq_2class.hdf5.pred.data')
+      test_auc_acc(test_acc_per_fold,test_auc_per_fold,y_test_kf)
+   
+    print('------------------------------------------------------------------------')
+    print('Score per fold')
+    for i in range(0, len(train_acc_per_fold)):
+      print('------------------------------------------------------------------------')
+      print(f'> Fold {i+1} - Loss: {train_loss_per_fold[i]} - Accuracy: {train_acc_per_fold[i]}%')
+    print('------------------------------------------------------------------------')
+    print('Average scores for all folds:')
+    print(f'> Accuracy: {np.mean(train_acc_per_fold)} (+- {np.std(train_acc_per_fold)})')
+    print(f'> Loss: {np.mean(train_loss_per_fold)}')
+    print('------------------------------------------------------------------------')
+
+    with open(os.path.join(save_dir, "test_auc.txt"), "w") as of:
+        of.write(test_acc_per_fold)
+    
+    with open(os.path.join(save_dir, "test_acc.txt"), "w") as of:
+        of.write(test_auc_per_fold)
+
+    with open(os.path.join(save_dir, "train_auc.txt"), "w") as of:
         of.write("enhancer AUC: %f\n" % auc2)
         of.write("silencer AUC: %f\n" % auc1)
 
