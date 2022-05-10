@@ -171,10 +171,10 @@ def run_model(data, model, save_dir):
     print('------------------------------------------------------------------------')
 
     with open(os.path.join(save_dir, "test_auc.txt"), "w") as of:
-        of.write(test_acc_per_fold)
+        of.write(str(test_acc_per_fold))
     
     with open(os.path.join(save_dir, "test_acc.txt"), "w") as of:
-        of.write(test_auc_per_fold)
+        of.write(str(test_auc_per_fold))
 
     with open(os.path.join(save_dir, "train_auc.txt"), "w") as of:
         of.write("enhancer AUC: %f\n" % auc2)
