@@ -61,8 +61,11 @@ def test_auc_acc(test_acc_per_fold,test_auc_per_fold,y_test_kf):
 
 
 def train_val_divide(mat):
-  mat_train=mat[:6597]
-  mat_val=mat[6597:]
+  len_m=len(mat)
+  len_75 = int(((len_m*3)/4))
+  #len_25 = len_m -  len_75
+  mat_train=mat[:len_75]
+  mat_val=mat[len_75:]
   return mat_train,mat_val
 
 def run_model(data, model, save_dir):
@@ -98,7 +101,7 @@ def run_model(data, model, save_dir):
     earlystopper = EarlyStopping(monitor="val_loss", patience=10, verbose=1)
     _callbacks.append(earlystopper)
 
-    kfold = KFold(n_splits=2, shuffle=True)
+    kfold = KFold(n_splits=4, shuffle=True)
 
     inputs = np.concatenate((data["train_data"], data["val_data"]), axis=0)
     inputs = np.concatenate((inputs, data["test_data"]), axis=0)
@@ -118,14 +121,24 @@ def run_model(data, model, save_dir):
       print(" ")
 
       X_train_kf, X_test_kf = inputs[train_index], inputs[test_index]
+      #print("inputs", len(inputs))
       y_train_kf, y_test_kf = targets[train_index], targets[test_index]
+      #print("targets", len(targets))
+      #print("x_train_kf", len(X_train_kf))
+      #print("x_test_kf", len(X_test_kf))
+
       X_train_kf_1, X_val_kf = train_val_divide(X_train_kf)
+      #print("X_train_kf_1 length = ", len(X_train_kf_1))
+      #print("X_val_kf length = ", len(X_val_kf))
+
       y_train_kf_1, y_val_kf = train_val_divide(y_train_kf)
+      #print("y_train_kf_1 length = ", len(y_train_kf_1))
+      #print("y_val_kf length = ", len(y_val_kf))
 
       history = parallel_model.fit(X_train_kf_1,
                           y_train_kf_1,
                           batch_size=BATCH_SIZE * 1,
-                          epochs=25,
+                          epochs=EPOCH,
                           validation_data=(X_val_kf, y_val_kf),
                           shuffle=True,
                           callbacks=_callbacks, verbose=1)
@@ -167,7 +180,7 @@ def run_model(data, model, save_dir):
         of.write("enhancer AUC: %f\n" % auc2)
         of.write("silencer AUC: %f\n" % auc1)
 
-    [fprs, tprs, thrs] = metrics.roc_curve(Y_test[:,0], Y_pred[:, 0])
+    [fprs, tprs, thrs] = metrics.roc_curve(y_test_kf[:,0], Y_pred[:, 0])
     sort_ix = np.argsort(np.abs(fprs - 0.1))
     fpr10_thr = thrs[sort_ix[0]]
     sort_ix = np.argsort(np.abs(fprs - 0.05))
@@ -177,7 +190,7 @@ def run_model(data, model, save_dir):
     sort_ix = np.argsort(np.abs(fprs - 0.01))
     fpr1_thr = thrs[sort_ix[0]]
 
-    [fprs, tprs, thrs] = metrics.roc_curve(Y_test[:,1], Y_pred[:, 1])
+    [fprs, tprs, thrs] = metrics.roc_curve(y_test_kf[:,1], Y_pred[:, 1])
     sort_ix = np.argsort(np.abs(fprs - 0.1))
     fpr10_thre = thrs[sort_ix[0]]
     sort_ix = np.argsort(np.abs(fprs - 0.05))
