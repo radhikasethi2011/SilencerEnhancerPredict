@@ -101,7 +101,7 @@ def run_model(data, model, save_dir):
     earlystopper = EarlyStopping(monitor="val_loss", patience=10, verbose=1)
     _callbacks.append(earlystopper)
 
-    kfold = KFold(n_splits=4, shuffle=True)
+    kfold = KFold(n_splits=10, shuffle=True)
 
     inputs = np.concatenate((data["train_data"], data["val_data"]), axis=0)
     inputs = np.concatenate((inputs, data["test_data"]), axis=0)
