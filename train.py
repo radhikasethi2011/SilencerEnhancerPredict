@@ -156,7 +156,7 @@ def run_model(data, model, save_dir):
 
       # Increase fold number
       fold_no = fold_no + 1
-      model_predict('/content/SilencerEnhancerPredict/examples/training_200seq_2class.hdf5', '/content/SilencerEnhancerPredict/examples/model_weights.hdf5', '/content/SilencerEnhancerPredict/examples/training_200seq_2class.hdf5.pred.data')
+      model_predict('/content/SilencerEnhancerPredict/examples/training_200seq_2class.hdf5', '/content/SilencerEnhancerPredict/examples/model_weights.hdf5', '/content/SilencerEnhancerPredict/examples/training_200seq_2class.hdf5.pred.data',X_test_kf)
       test_auc_acc(test_acc_per_fold,test_auc_per_fold,y_test_kf)
    
     print('------------------------------------------------------------------------')
