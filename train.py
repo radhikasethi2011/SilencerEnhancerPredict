@@ -12,8 +12,9 @@ from sklearn import metrics
 import h5py
 from sklearn.model_selection import KFold
 from predict import model_predict, load_dataset
-from sklearn.metrics import roc_curve,roc_auc_score
+from sklearn.metrics import roc_curve,roc_auc_score, auc, accuracy_score
 import matplotlib.pyplot as plt
+from sklearn.metrics import precision_recall_curve
 
 
 INPUT_LENGTH = 200
@@ -21,14 +22,18 @@ EPOCH = 200
 BATCH_SIZE = 64
 WORK_DIR = "/content/SilencerEnhancerPredict"
 
-def plot_roc_curve(fpr,tpr): 
-  plt.plot(fpr,tpr) 
-  plt.axis([0,1,0,1]) 
-  plt.xlabel('False Positive Rate') 
-  plt.ylabel('True Positive Rate') 
-  plt.show()   
+def plot_roc_curve(fpr, tpr, fold_no, auc): 
+  plt.plot(fpr, tpr, label='ROC curve (area = %.2f)' %auc)
+  plt.plot([0, 1], [0, 1], linestyle='--', lw=2, color='r')
+  plt.title('ROC curve')
+  plt.xlabel('False Positive Rate')
+  plt.ylabel('True Positive Rate')
+  plt.grid()
+  plt.legend()
+  #plt.show())
+  plt.savefig(f"curves/plot_roc_curve_{fold_no}.png") 
 
-def test_auc_acc(test_acc_per_fold,test_auc_per_fold,y_test_kf):
+def test_auc_acc(test_acc_per_fold,test_auc_per_fold,y_test_kf, fold_no):
   f= '/content/SilencerEnhancerPredict/examples/training_200seq_2class.hdf5.pred.data'
   with h5py.File(f, "r") as f:
       # List all groups
@@ -39,25 +44,29 @@ def test_auc_acc(test_acc_per_fold,test_auc_per_fold,y_test_kf):
       data_pred = list(f[a_group_key])
 
   data_pred_class = []
+  data_pred_binary_class = []
   for i in range(len(data_pred)):
+    data_pred_class.append(abs(data_pred[i][0] - data_pred[i][1]))
     if data_pred[i][0] > data_pred[i][1]:
-      data_pred_class.append(0) #left
+      data_pred_binary_class.append(0) #left
     else: 
-      data_pred_class.append(1) #right
+      data_pred_binary_class.append(1) #right
+    
   
   d2 = y_test_kf[:].tolist()
   data_orig_class = []
   for i in range(len(d2)):
     if(d2[i] == [1.0, 0.0]):
-      data_orig_class.append(0)
+      data_orig_class.append(0.0)
     else:
-      data_orig_class.append(1)
-  acc= metrics.accuracy_score(data_orig_class, data_pred_class, normalize=True, sample_weight=None)
+      data_orig_class.append(1.0)
+  acc = accuracy_score(data_orig_class, data_pred_binary_class)
   test_acc_per_fold.append(acc)
-  fpr , tpr , thresholds = roc_curve (data_orig_class, data_pred_class)
-  auc= metrics.auc(fpr, tpr)
+  fpr,tpr, thresh = metrics.roc_curve(data_orig_class, data_pred_class)
+  auc = metrics.auc(fpr, tpr)
   test_auc_per_fold.append(auc)
-  plot_roc_curve (fpr,tpr) 
+  plot_roc_curve(fpr, tpr, fold_no, auc) 
+
 
 
 def train_val_divide(mat):
@@ -144,6 +153,7 @@ def run_model(data, model, save_dir):
                           callbacks=_callbacks, verbose=1)
 
       Y_pred = parallel_model.predict(X_test_kf)
+    
 
       auc1 = metrics.roc_auc_score(y_test_kf[:,0], Y_pred[:,0])
       auc2 = metrics.roc_auc_score(y_test_kf[:,1], Y_pred[:,1])
@@ -157,7 +167,7 @@ def run_model(data, model, save_dir):
       # Increase fold number
       fold_no = fold_no + 1
       model_predict('/content/SilencerEnhancerPredict/examples/training_200seq_2class.hdf5', '/content/SilencerEnhancerPredict/examples/model_weights.hdf5', '/content/SilencerEnhancerPredict/examples/training_200seq_2class.hdf5.pred.data',X_test_kf)
-      test_auc_acc(test_acc_per_fold,test_auc_per_fold,y_test_kf)
+      test_auc_acc(test_acc_per_fold,test_auc_per_fold,y_test_kf, fold_no)
    
     print('------------------------------------------------------------------------')
     print('Score per fold')
