@@ -180,10 +180,10 @@ def run_model(data, model, save_dir):
     print(f'> Loss: {np.mean(train_loss_per_fold)}')
     print('------------------------------------------------------------------------')
 
-    with open(os.path.join(save_dir, "test_auc.txt"), "w") as of:
+    with open(os.path.join(save_dir, "test_acc.txt"), "w") as of:
         of.write(str(test_acc_per_fold))
     
-    with open(os.path.join(save_dir, "test_acc.txt"), "w") as of:
+    with open(os.path.join(save_dir, "test_auc.txt"), "w") as of:
         of.write(str(test_auc_per_fold))
 
     with open(os.path.join(save_dir, "train_auc.txt"), "w") as of:
