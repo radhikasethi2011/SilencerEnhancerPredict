@@ -15,7 +15,7 @@ from predict import model_predict, load_dataset
 from sklearn.metrics import roc_curve,roc_auc_score, auc, accuracy_score
 import matplotlib.pyplot as plt
 from sklearn.metrics import precision_recall_curve
-
+import sys
 
 INPUT_LENGTH = 200
 EPOCH = 200
@@ -63,9 +63,9 @@ def test_auc_acc(test_acc_per_fold,test_auc_per_fold,y_test_kf, fold_no):
   acc = accuracy_score(data_orig_class, data_pred_binary_class)
   test_acc_per_fold.append(acc)
   fpr,tpr, thresh = metrics.roc_curve(data_orig_class, data_pred_class)
-  auc = metrics.auc(fpr, tpr)
-  test_auc_per_fold.append(auc)
-  plot_roc_curve(fpr, tpr, fold_no, auc) 
+  aucc = metrics.auc(fpr, tpr)
+  test_auc_per_fold.append(aucc)
+  plot_roc_curve(fpr, tpr, fold_no, aucc) 
 
 
 
@@ -242,9 +242,8 @@ def train_model(Dfile,results_dir):
     run_model(data, model, results_dir)
 
     
-if __name__ == "__main__":
+if _name_ == "_main_":
 
-    import sys
     data = sys.argv[1]
     results_dir = sys.argv[2]
     if not os.path.exists(results_dir):
