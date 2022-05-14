@@ -242,7 +242,7 @@ def train_model(Dfile,results_dir):
     run_model(data, model, results_dir)
 
     
-if _name_ == "_main_":
+if __name__ == "__main__":
 
     data = sys.argv[1]
     results_dir = sys.argv[2]
