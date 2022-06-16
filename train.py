@@ -60,7 +60,9 @@ def test_auc_acc(test_acc_per_fold,test_auc_per_fold,y_test_kf, fold_no):
       data_orig_class.append(0.0)
     else:
       data_orig_class.append(1.0)
-  acc = accuracy_score(data_orig_class, data_pred_binary_class)
+  
+  #acc = accuracy_score(data_orig_class, data_pred_binary_class)
+  acc = np.sum(np.equal(np.array(data_orig_class), np.array(data_pred_binary_class))) / len(data_orig_class)
   test_acc_per_fold.append(acc)
   fpr,tpr, thresh = metrics.roc_curve(data_orig_class, data_pred_class)
   aucc = metrics.auc(fpr, tpr)
