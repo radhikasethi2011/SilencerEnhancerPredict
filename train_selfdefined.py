@@ -86,15 +86,16 @@ def test_auc_acc(test_acc_per_fold,test_auc_per_fold,y_test_kf, fold_no):
   data_orig_class = []
   data_pred_class = []
   data_pred_binary_class = []
+  data_pred_binary_class_calc_acc = []
   
   for i in range(len(data_pred)):
     data_pred_class.append(data_pred[i][1])
-    """
+    
     if data_pred[i][0] > data_pred[i][1]:
-      data_pred_binary_class.append(0) #left
+      data_pred_binary_class_calc_acc.append(0) #left
     else: 
-      data_pred_binary_class.append(1) #right
-    """
+      data_pred_binary_class_calc_acc.append(1) #right
+    
     
 
   d2 = y_test_kf[:].tolist()
@@ -122,7 +123,7 @@ def test_auc_acc(test_acc_per_fold,test_auc_per_fold,y_test_kf, fold_no):
     lr_tp_rates.append(tp_rate)
     lr_fp_rates.append(fp_rate)
   
-  acc = np.sum(np.equal(np.array(data_orig_class), np.array(data_pred_binary_class))) / len(data_orig_class)
+  acc = np.sum(np.equal(np.array(data_orig_class), np.array(data_pred_binary_class_calc_acc))) / len(data_orig_class)
   #acc = accuracy_score(data_orig_class, data_pred_binary_class)
   print("test acc: ", acc)
   test_acc_per_fold.append(acc)
